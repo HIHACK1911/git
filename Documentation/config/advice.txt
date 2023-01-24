@@ -142,6 +142,9 @@ advice.*::
 		Advice shown when either linkgit:git-add[1] or linkgit:git-rm[1]
 		is asked to update index entries outside the current sparse
 		checkout.
+	useCoreFSMonitorConfig::
+		Advice shown if the deprecated 'core.useBuiltinFSMonitor' config
+		setting is in use.
 	waitingForEditor::
 		Print a message to the terminal whenever Git is waiting for
 		editor input from the user.
