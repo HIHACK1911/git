@@ -144,24 +144,6 @@ static char last_non_space_char(const char *s)
 	return '\0';
 }
 
-static void print_tok_val(FILE *outfile, const char *tok, const char *val)
-{
-	char c;
-
-	if (!tok) {
-		fprintf(outfile, "%s\n", val);
-		return;
-	}
-
-	c = last_non_space_char(tok);
-	if (!c)
-		return;
-	if (strchr(separators, c))
-		fprintf(outfile, "%s%s\n", tok, val);
-	else
-		fprintf(outfile, "%s%c %s\n", tok, separators[0], val);
-}
-
 static struct trailer_item *trailer_from_arg(struct arg_item *arg_tok)
 {
 	struct trailer_item *new_item = xcalloc(1, sizeof(*new_item));
@@ -1140,67 +1122,6 @@ void trailer_info_release(struct trailer_info *info)
 	for (i = 0; i < info->trailer_nr; i++)
 		free(info->trailers[i]);
 	free(info->trailers);
-}
-
-static void format_trailer_info(struct strbuf *out,
-				const struct trailer_info *info,
-				const char *msg,
-				const struct process_trailer_options *opts)
-{
-	size_t origlen = out->len;
-	size_t i;
-
-	/* If we want the whole block untouched, we can take the fast path. */
-	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
-	    !opts->separator && !opts->key_only && !opts->value_only &&
-	    !opts->key_value_separator) {
-		strbuf_add(out, msg + info->trailer_block_start,
-			   info->trailer_block_end - info->trailer_block_start);
-		return;
-	}
-
-	for (i = 0; i < info->trailer_nr; i++) {
-		char *trailer = info->trailers[i];
-		ssize_t separator_pos = find_separator(trailer, separators);
-
-		if (separator_pos >= 1) {
-			struct strbuf tok = STRBUF_INIT;
-			struct strbuf val = STRBUF_INIT;
-
-			parse_trailer(&tok, &val, NULL, trailer, separator_pos);
-			if (!opts->filter || opts->filter(&tok, opts->filter_data)) {
-				if (opts->unfold)
-					unfold_value(&val);
-
-				if (opts->separator && out->len != origlen)
-					strbuf_addbuf(out, opts->separator);
-				if (!opts->value_only)
-					strbuf_addbuf(out, &tok);
-				if (!opts->key_only && !opts->value_only) {
-					if (opts->key_value_separator)
-						strbuf_addbuf(out, opts->key_value_separator);
-					else
-						strbuf_addstr(out, ": ");
-				}
-				if (!opts->key_only)
-					strbuf_addbuf(out, &val);
-				if (!opts->separator)
-					strbuf_addch(out, '\n');
-			}
-			strbuf_release(&tok);
-			strbuf_release(&val);
-
-		} else if (!opts->only_trailers) {
-			if (opts->separator && out->len != origlen) {
-				strbuf_addbuf(out, opts->separator);
-			}
-			strbuf_addstr(out, trailer);
-			if (opts->separator) {
-				strbuf_rtrim(out);
-			}
-		}
-	}
-
 }
 
 void format_trailers_from_commit(const struct process_trailer_options *opts,
