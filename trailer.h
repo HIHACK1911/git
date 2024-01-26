@@ -5,6 +5,7 @@
 #include "strbuf.h"
 
 struct trailer_block;
+struct trailer_conf;
 
 enum trailer_where {
 	WHERE_DEFAULT,
@@ -45,6 +46,9 @@ struct new_trailer_item {
 	enum trailer_if_missing if_missing;
 };
 
+void duplicate_trailer_conf(struct trailer_conf *dst,
+			    const struct trailer_conf *src);
+
 struct process_trailer_options {
 	int in_place;
 	int trim_empty;
@@ -69,6 +73,12 @@ void parse_trailers_from_command_line_args(struct list_head *arg_head,
 
 void process_trailers_lists(struct list_head *head,
 			    struct list_head *arg_head);
+
+ssize_t find_separator(const char *line, const char *separators);
+
+void parse_trailer(const char *line, ssize_t separator_pos,
+		   struct strbuf *tok, struct strbuf *val,
+		   const struct trailer_conf **conf);
 
 struct trailer_block *parse_trailers(const struct process_trailer_options *opts,
 				     const char *str,
