@@ -127,6 +127,19 @@ struct trailer_iterator {
 	struct strbuf key;
 	struct strbuf val;
 
+	/*
+	 * Raw line (e.g., "foo: bar baz") before being parsed as a trailer
+	 * key/val pair as part of a trailer block. A trailer block can be
+	 * either 100% trailer lines, or mixed in with non-trailer lines (in
+	 * which case at least 25% must be trailer lines).
+	 */
+	const char *raw;
+
+	/*
+	 * 1 if the raw line was parsed as a trailer line (key/val pair).
+	 */
+	int is_trailer;
+
 	/* private */
 	struct {
 		struct trailer_info info;
