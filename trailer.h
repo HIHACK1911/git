@@ -4,7 +4,7 @@
 #include "list.h"
 #include "strbuf.h"
 
-struct trailer_info;
+struct trailer_block;
 
 enum trailer_where {
 	WHERE_DEFAULT,
@@ -70,15 +70,15 @@ void parse_trailers_from_command_line_args(struct list_head *arg_head,
 void process_trailers_lists(struct list_head *head,
 			    struct list_head *arg_head);
 
-struct trailer_info *parse_trailers(const struct process_trailer_options *opts,
-				    const char *str,
-				    struct list_head *head);
+struct trailer_block *parse_trailers(const struct process_trailer_options *opts,
+				     const char *str,
+				     struct list_head *head);
 
-size_t trailer_block_start(struct trailer_info *info);
-size_t trailer_block_end(struct trailer_info *info);
-int blank_line_before_trailer_block(struct trailer_info *info);
+size_t trailer_block_start(struct trailer_block *trailer_block);
+size_t trailer_block_end(struct trailer_block *trailer_block);
+int blank_line_before_trailer_block(struct trailer_block *trailer_block);
 
-void trailer_info_release(struct trailer_info *info);
+void trailer_block_release(struct trailer_block *trailer_block);
 
 void trailer_config_init(void);
 void format_trailers(const struct process_trailer_options *opts,
@@ -123,7 +123,7 @@ struct trailer_iterator {
 
 	/* private */
 	struct {
-		struct trailer_info *info;
+		struct trailer_block *trailer_block;
 		size_t cur;
 	} internal;
 };
