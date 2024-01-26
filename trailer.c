@@ -66,6 +66,11 @@ static LIST_HEAD(conf_head);
 
 static char *separators = ":";
 
+const char *default_separators(void)
+{
+	return separators;
+}
+
 static int configured;
 
 #define TRAILER_ARG_STRING "$ARG"
@@ -424,6 +429,25 @@ int trailer_set_if_missing(enum trailer_if_missing *item, const char *value)
 	return 0;
 }
 
+void trailer_conf_set(enum trailer_where where,
+		      enum trailer_if_exists if_exists,
+		      enum trailer_if_missing if_missing,
+		      struct trailer_conf *conf)
+{
+	if (where != WHERE_DEFAULT)
+		conf->where = where;
+	if (if_exists != EXISTS_DEFAULT)
+		conf->if_exists = if_exists;
+	if (if_missing != MISSING_DEFAULT)
+		conf->if_missing = if_missing;
+}
+
+struct trailer_conf *new_trailer_conf(void)
+{
+	struct trailer_conf *new = xcalloc(1, sizeof(*new));
+	return new;
+}
+
 void duplicate_trailer_conf(struct trailer_conf *dst,
 			    const struct trailer_conf *src)
 {
@@ -642,6 +666,9 @@ ssize_t find_separator(const char *line, const char *separators)
 /*
  * Obtain the token, value, and conf from the given trailer.
  *
+ * The conf needs special handling. We first read hardcoded defaults, and
+ * override them if we find a matching trailer configuration in the config.
+ *
  * separator_pos must not be 0, since the token cannot be an empty string.
  *
  * If separator_pos is -1, interpret the whole trailer as a token.
@@ -691,22 +718,14 @@ static struct trailer_item *add_trailer_item(struct list_head *head, char *tok,
 	return new_item;
 }
 
-static void add_arg_item(struct list_head *arg_head, char *tok, char *val,
-			 const struct trailer_conf *conf,
-			 const struct new_trailer_item *new_trailer_item)
+void add_arg_item(char *tok, char *val, const struct trailer_conf *conf,
+		  struct list_head *arg_head)
+
 {
 	struct arg_item *new_item = xcalloc(1, sizeof(*new_item));
 	new_item->token = tok;
 	new_item->value = val;
 	duplicate_trailer_conf(&new_item->conf, conf);
-	if (new_trailer_item) {
-		if (new_trailer_item->where != WHERE_DEFAULT)
-			new_item->conf.where = new_trailer_item->where;
-		if (new_trailer_item->if_exists != EXISTS_DEFAULT)
-			new_item->conf.if_exists = new_trailer_item->if_exists;
-		if (new_trailer_item->if_missing != MISSING_DEFAULT)
-			new_item->conf.if_missing = new_trailer_item->if_missing;
-	}
 	list_add_tail(&new_item->list, arg_head);
 }
 
@@ -719,10 +738,10 @@ void parse_trailers_from_config(struct list_head *config_head)
 	list_for_each(pos, &conf_head) {
 		item = list_entry(pos, struct arg_item, list);
 		if (item->conf.command)
-			add_arg_item(config_head,
-				     xstrdup(token_from_item(item, NULL)),
+			add_arg_item(xstrdup(token_from_item(item, NULL)),
 				     xstrdup(""),
-				     &item->conf, NULL);
+				     &item->conf,
+				     config_head);
 	}
 }
 
@@ -755,10 +774,10 @@ void parse_trailers_from_command_line_args(struct list_head *arg_head,
 			strbuf_release(&sb);
 		} else {
 			parse_trailer(tr->text, separator_pos, &tok, &val, &conf);
-			add_arg_item(arg_head,
-				     strbuf_detach(&tok, NULL),
+			add_arg_item(strbuf_detach(&tok, NULL),
 				     strbuf_detach(&val, NULL),
-				     conf, tr);
+				     conf,
+				     arg_head);
 		}
 	}
 
@@ -1145,6 +1164,16 @@ void free_trailers(struct list_head *trailers)
 	list_for_each_safe(pos, p, trailers) {
 		list_del(pos);
 		free_trailer_item(list_entry(pos, struct trailer_item, list));
+	}
+}
+
+void new_trailers_clear(struct list_head *trailers)
+{
+	struct list_head *pos, *p;
+
+	list_for_each_safe(pos, p, trailers) {
+		list_del(pos);
+		free_arg_item(list_entry(pos, struct arg_item, list));
 	}
 }
 
