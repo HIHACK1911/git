@@ -2583,6 +2583,27 @@ test_expect_success 'git config - variable name include' '
 	EOF
 '
 
+test_expect_success 'git config - variable name - __git_compute_first_level_config_vars_for_section' '
+	test_completion "git config submodule." <<-\EOF
+	submodule.active Z
+	submodule.alternateErrorStrategy Z
+	submodule.alternateLocation Z
+	submodule.fetchJobs Z
+	submodule.propagateBranches Z
+	submodule.recurse Z
+	EOF
+'
+test_expect_success 'git config - variable name - __git_compute_second_level_config_vars_for_section' '
+	test_completion "git config branch.main." <<-\EOF
+	branch.main.description Z
+	branch.main.remote Z
+	branch.main.pushRemote Z
+	branch.main.merge Z
+	branch.main.mergeOptions Z
+	branch.main.rebase Z
+	EOF
+'
+
 test_expect_success 'git config - value' '
 	test_completion "git config color.pager " <<-\EOF
 	false Z

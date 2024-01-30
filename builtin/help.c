@@ -50,6 +50,7 @@ static enum help_action {
 	HELP_ACTION_DEVELOPER_INTERFACES,
 	HELP_ACTION_CONFIG_FOR_COMPLETION,
 	HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION,
+	HELP_ACTION_CONFIG_ALL_FOR_COMPLETION,
 } cmd_mode;
 
 static const char *html_path;
@@ -86,6 +87,8 @@ static struct option builtin_help_options[] = {
 		    HELP_ACTION_CONFIG_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 	OPT_CMDMODE_F(0, "config-sections-for-completion", &cmd_mode, "",
 		    HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+	OPT_CMDMODE_F(0, "config-all-for-completion", &cmd_mode, "",
+		    HELP_ACTION_CONFIG_ALL_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 
 	OPT_END(),
 };
@@ -669,6 +672,10 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	case HELP_ACTION_CONFIG_FOR_COMPLETION:
 		opt_mode_usage(argc, "--config-for-completion", help_format);
 		list_config_help(SHOW_CONFIG_VARS);
+		return 0;
+	case HELP_ACTION_CONFIG_ALL_FOR_COMPLETION:
+		opt_mode_usage(argc, "--config-all-for-completion", help_format);
+		list_config_help(SHOW_CONFIG_HUMAN);
 		return 0;
 	case HELP_ACTION_USER_INTERFACES:
 		opt_mode_usage(argc, "--user-interfaces", help_format);
