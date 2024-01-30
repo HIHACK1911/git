@@ -2622,6 +2622,11 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       each_ref_fn cb,
 				       void *cb_data)
 {
+	if (filter->kind & FILTER_REFS_NO_FILTER) {
+		return refs_for_each_all_refs(
+			get_main_ref_store(the_repository), cb, cb_data);
+	}
+
 	if (!filter->match_as_path) {
 		/*
 		 * in this case, the patterns are applied after
@@ -2775,8 +2780,12 @@ static struct ref_array_item *apply_ref_filter(const char *refname, const struct
 
 	/* Obtain the current ref kind from filter_ref_kind() and ignore unwanted refs. */
 	kind = filter_ref_kind(filter, refname);
-	if (!(kind & filter->kind))
+	if (filter->kind & FILTER_REFS_NO_FILTER) {
+		if (kind == FILTER_REFS_DETACHED_HEAD)
+			kind = FILTER_REFS_OTHERS;
+	} else if (!(kind & filter->kind)) {
 		return NULL;
+	}
 
 	if (!filter_pattern_match(filter, refname))
 		return NULL;
@@ -3041,7 +3050,7 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 			ret = for_each_fullref_in("refs/remotes/", fn, cb_data);
 		else if (filter->kind == FILTER_REFS_TAGS)
 			ret = for_each_fullref_in("refs/tags/", fn, cb_data);
-		else if (filter->kind & FILTER_REFS_ALL)
+		else if (filter->kind & FILTER_REFS_ALL || filter->kind & FILTER_REFS_NO_FILTER)
 			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
 		if (!ret && (filter->kind & FILTER_REFS_DETACHED_HEAD))
 			head_ref(fn, cb_data);

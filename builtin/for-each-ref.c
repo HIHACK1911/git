@@ -25,6 +25,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	struct ref_format format = REF_FORMAT_INIT;
 	int from_stdin = 0;
 	struct strvec vec = STRVEC_INIT;
+	unsigned int flags = FILTER_REFS_ALL;
 
 	struct option opts[] = {
 		OPT_BIT('s', "shell", &format.quote_style,
@@ -93,11 +94,29 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		/* vec.v is NULL-terminated, just like 'argv'. */
 		filter.name_patterns = vec.v;
 	} else {
+		size_t i;
+
 		filter.name_patterns = argv;
+
+		/*
+		 * Search for any empty string pattern, if it exists then we
+		 * print all refs without any filtering.
+		 */
+		i = 0;
+		while (argv[i]) {
+			if (!argv[i][0]) {
+				flags = FILTER_REFS_NO_FILTER;
+				/* doing this removes any pattern from being matched */
+				filter.name_patterns[0] = NULL;
+				break;
+			}
+
+			i++;
+		}
 	}
 
 	filter.match_as_path = 1;
-	filter_and_format_refs(&filter, FILTER_REFS_ALL, sorting, &format);
+	filter_and_format_refs(&filter, flags, sorting, &format);
 
 	ref_filter_clear(&filter);
 	ref_sorting_release(sorting);

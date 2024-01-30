@@ -260,6 +260,13 @@ enum do_for_each_ref_flags {
 	 * INCLUDE_BROKEN, since they are otherwise not included at all.
 	 */
 	DO_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
+
+	/*
+	 * Include all refs in the $GIT_DIR in contrast to generally only listing
+	 * references having the "refs/" prefix. In the files-backend this is
+	 * limited to regular refs, pseudorefs and HEAD.
+	 */
+	DO_FOR_EACH_INCLUDE_ALL_REFS = (1 << 3),
 };
 
 /*

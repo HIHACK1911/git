@@ -31,6 +31,40 @@ test_expect_success 'setup some history and refs' '
 	git update-ref refs/odd/spot main
 '
 
+cat >expect <<-\EOF
+	HEAD
+	ORIG_HEAD
+	refs/heads/main
+	refs/heads/side
+	refs/odd/spot
+	refs/tags/annotated-tag
+	refs/tags/doubly-annotated-tag
+	refs/tags/doubly-signed-tag
+	refs/tags/four
+	refs/tags/one
+	refs/tags/signed-tag
+	refs/tags/three
+	refs/tags/two
+EOF
+
+test_expect_success 'empty pattern prints pseudorefs' '
+	git update-ref ORIG_HEAD main &&
+	git for-each-ref --format="%(refname)" "" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'empty pattern with other patterns' '
+	git update-ref ORIG_HEAD main &&
+	git for-each-ref --format="%(refname)" "" "refs/" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'empty pattern towards the end' '
+	git update-ref ORIG_HEAD main &&
+	git for-each-ref --format="%(refname)" "refs/" "" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'filtering with --points-at' '
 	cat >expect <<-\EOF &&
 	refs/heads/main
